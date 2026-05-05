@@ -35,9 +35,9 @@ Based on the above changes, create a single git commit:
 2. Stage relevant files and create the commit using HEREDOC syntax:
 \`\`\`
 git commit -m "$(cat <<'EOF'
-Commit message here.${ATTRIBUTION_TEXT?`
+Commit message here.${ADDITIONAL_COMMIT_GUIDANCE?`
 
-${ATTRIBUTION_TEXT}`:""}
+${ADDITIONAL_COMMIT_GUIDANCE}`:""}
 EOF
 )"
 \`\`\`

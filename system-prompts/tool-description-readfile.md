@@ -8,7 +8,6 @@ variables:
   - CAT_DASH_N_NOTE
   - READ_FULL_FILE_NOTE
   - CAN_READ_PDF_FILES_FN
-  - HAS_ADDITIONAL_READ_NOTE_FN
   - ADDITIONAL_READ_NOTE
 -->
 Reads a file from the local filesystem.
@@ -22,4 +21,4 @@ ${READ_FULL_FILE_NOTE}
 - Reads Jupyter notebooks (.ipynb) — returns all cells with outputs.
 - Files only, not directories — list dirs with the shell tool.
 - Empty files return a system-reminder warning instead of contents.
-- Read multiple files in parallel when independent — one message, multiple Read calls.${HAS_ADDITIONAL_READ_NOTE_FN()?ADDITIONAL_READ_NOTE:""}
+- Read multiple files in parallel when independent — one message, multiple Read calls.${ADDITIONAL_READ_NOTE}

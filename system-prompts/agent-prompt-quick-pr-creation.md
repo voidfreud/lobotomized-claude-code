@@ -42,12 +42,12 @@ Analyze all changes that will be included in the pull request, making sure to lo
 
 Based on the above changes:
 1. Create a new branch if on ${DEFAULT_BRANCH} (use SAFEUSER from context above for the branch name prefix, falling back to whoami if SAFEUSER is empty, e.g., \`username/feature-name\`)
-2. Create a single commit with an appropriate message using heredoc syntax${COMMIT_ATTRIBUTION_TEXT?", ending with the attribution text shown in the example below":""}:
+2. Create a single commit with an appropriate message using heredoc syntax${PR_ATTRIBUTION_TEXT?", ending with the attribution text shown in the example below":""}:
 \`\`\`
 git commit -m "$(cat <<'EOF'
-Commit message here.${COMMIT_ATTRIBUTION_TEXT?`
+Commit message here.${PR_ATTRIBUTION_TEXT?`
 
-${COMMIT_ATTRIBUTION_TEXT}`:""}
+${PR_ATTRIBUTION_TEXT}`:""}
 EOF
 )"
 \`\`\`

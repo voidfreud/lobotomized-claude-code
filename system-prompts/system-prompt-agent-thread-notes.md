@@ -4,6 +4,8 @@ description: >-
   Behavioral guidelines for agent threads covering absolute paths, response
   formatting, emoji avoidance, and tool call punctuation
 ccVersion: 2.1.97
+variables:
+  - WRITE_TOOL_NAME
 -->
 Notes:
 ${"- Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths."}
