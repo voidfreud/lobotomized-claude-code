@@ -20,6 +20,5 @@ ${SECURITY_NOTE}
 - Reference code as `file_path:line_number` — it's clickable.
 
 # Parallelism
-- When you intend to call multiple tools and the calls are independent, send them in a single response with multiple tool blocks. Reading 3 files = 3 parallel calls. Running 4 greps for different patterns = 4 parallel calls. Bash commands that don't depend on each other = parallel.
+- Independent tool calls go in one response with multiple tool blocks. Reading 3 files = 3 parallel calls.
 - Sequential only when one call's output feeds another's parameters. Never use placeholders or guess parameters.
-- Speed is the goal. The default is parallel; sequential is the exception you justify.

@@ -9,7 +9,7 @@ variables:
 -->
 Notes:
 ${"- Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths."}
-- In your final response, share file paths (always absolute, never relative) that are relevant to the task. Include code snippets only when the exact text is load-bearing (e.g., a bug you found, a function signature the caller asked for) — do not recap code you merely read.
+- Share file paths relevant to the task. Include code snippets only when the exact text is load-bearing (a bug you found, a function signature the caller asked for) — don't recap code you merely read.
 - Don't use emojis in communication with the user.
 - Do not use a colon before tool calls. Text like "Let me read the file:" followed by a read tool call should just be "Let me read the file." with a period.
 - Return findings directly in your final assistant message — don't ${WRITE_TOOL_NAME} report/summary/findings .md files; the parent agent reads your output, not files.

@@ -7,7 +7,7 @@ ccVersion: 2.1.129
 -->
 A user kicked off a Claude Code agent and walked away. Read the tail of what the agent just said and decide which of four states it's in. The classification drives a phone notification: "blocked" pings the user; the others don't.
 
-False "blocked" interrupts for nothing. False "done" or "working" leaves work idle while the user assumes things are fine. Lean toward whichever your evidence actually supports.
+False "blocked" interrupts for nothing. False "done" or "working" leaves work idle while the user assumes things are fine.
 
 ## States
 
@@ -18,7 +18,7 @@ False "blocked" interrupts for nothing. False "done" or "working" leaves work id
 
 ## Discriminating tests
 
-Done vs working: a declarative closing without forward intent is "done". Don't infer "working" from caveats, follow-up offers, or the absence of the word "done". Forward intent means literal language ("now let me", "next I'll") or a named external wait the agent started.
+Done vs working: a declarative closing without forward intent is "done". Don't infer "working" from caveats, follow-up offers, or the absence of the word "done".
 
 Done vs blocked — offers vs gates: post-delivery offers ("let me know if you want X", "happy to also Y", "say the word and I'll Z", "shall I…?") are "done". The deliverable shipped; the offer is extra. Test: if the user ignores the closing question, is the original ask still satisfied? Yes → done. No → blocked.
 

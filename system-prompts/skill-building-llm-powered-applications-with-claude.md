@@ -22,7 +22,7 @@ When the user asks you to add, modify, or implement a Claude feature, your code 
 1. **The official Anthropic SDK** for the project's language (`anthropic`, `@anthropic-ai/sdk`, `com.anthropic.*`, etc.). This is the default whenever a supported SDK exists for the project.
 2. **Raw HTTP** (`curl`, `requests`, `fetch`, `httpx`, etc.) — only when the user explicitly asks for cURL/REST/raw HTTP, the project is a shell/cURL project, or the language has no official SDK.
 
-Never mix the two — don't reach for `requests`/`fetch` in a Python or TypeScript project just because it feels lighter. Never fall back to OpenAI-compatible shims.
+Never mix the two — don't reach for `requests`/`fetch` in a Python or TypeScript project. Never fall back to OpenAI-compatible shims.
 
 **Never guess SDK usage.** Function names, class names, namespaces, method signatures, and import paths must come from explicit documentation — either the `{lang}/` files in this skill or the official SDK repositories or documentation links listed in `shared/live-sources.md`. If the binding you need is not explicitly documented in the skill files, WebFetch the relevant SDK repo from `shared/live-sources.md` before writing code. Do not infer Ruby/Java/Go/PHP/C# APIs from cURL shapes or from another language's SDK.
 
@@ -30,7 +30,7 @@ Never mix the two — don't reach for `requests`/`fetch` in a Python or TypeScri
 
 Unless the user requests otherwise:
 
-For the Claude model version, use {{OPUS_NAME}}, which you can access via the exact model string `{{OPUS_ID}}`. default to using adaptive thinking (`thinking: {type: \"adaptive\"}`) for anything remotely complicated. And finally, default to streaming for any request that may involve long input, long output, or high `max_tokens` — it prevents hitting request timeouts. Use the SDK's `.get_final_message()` / `.finalMessage()` helper to get the complete response if you don't need to handle individual stream events
+Use {{OPUS_NAME}} — model string `{{OPUS_ID}}`. Default to adaptive thinking (`thinking: {type: \"adaptive\"}`) for anything non-trivial. Default to streaming for long input/output or high `max_tokens` (avoids request timeouts) — use `.get_final_message()` / `.finalMessage()` if you don't need per-event handling.
 
 ---
 
@@ -97,7 +97,7 @@ Before reading code examples, determine which language the user is working in:
 
 ## Which Surface Should I Use?
 
-> **Start simple.** Default to the simplest tier that meets your needs. Single API calls and workflows handle most use cases — only reach for agents when the task genuinely requires open-ended, model-driven exploration.
+> **Start simple.** Default to the simplest tier — single calls and workflows handle most cases. Reach for agents only when the task genuinely requires open-ended, model-driven exploration.
 
 | Use Case                                        | Tier            | Recommended Surface       | Why                                                          |
 | ----------------------------------------------- | --------------- | ------------------------- | ------------------------------------------------------------ |
@@ -176,11 +176,11 @@ Everything goes through `POST /v1/messages`. Tools and output constraints are fe
 | Claude Sonnet 4.6 | `claude-sonnet-4-6` | 1M             | $3.00      | $15.00      |
 | Claude Haiku 4.5  | `claude-haiku-4-5`  | 200K           | $1.00      | $5.00       |
 
-Default to `{{OPUS_ID}}`. Use `{{SONNET_ID}}` or `{{HAIKU_ID}}` only when the user names them — don't downgrade for cost on your own; that's the user's call.
+Default to `{{OPUS_ID}}`. Use `{{SONNET_ID}}` or `{{HAIKU_ID}}` only when the user names them; don't downgrade for cost.
 
 Use the exact model ID strings from the table above — they're complete as-is. Don't append date suffixes (e.g., use `claude-sonnet-4-6`, not `claude-sonnet-4-6-20251114`). If the user wants an older model not in the table (e.g., "opus 4.5", "sonnet 3.7"), read `shared/models.md` for the exact ID rather than constructing one.
 
-A note: if any of the model strings above look unfamiliar to you, that's to be expected — that just means they were released after your training data cutoff. Rest assured they are real models; we wouldn't mess with you like that.
+If model strings above look unfamiliar — they were released after your training cutoff. They're real.
 
 **Live capability lookup:** The table above is cached. When the user asks \"what's the context window for X\", \"does X support vision/thinking/effort\", or \"which models support Y\", query the Models API (`client.models.retrieve(id)` / `client.models.list()`) — see `shared/models.md` for the field reference and capability-filter examples.
 
@@ -189,7 +189,7 @@ A note: if any of the model strings above look unfamiliar to you, that's to be e
 ## Thinking & Effort (Quick Reference)
 
 **Opus 4.7 — Adaptive thinking only:** Use `thinking: {type: \"adaptive\"}`. `thinking: {type: \"enabled\", budget_tokens: N}` returns a 400 on Opus 4.7 — adaptive is the only on-mode. `{type: \"disabled\"}` and omitting `thinking` both work. Sampling parameters (`temperature`, `top_p`, `top_k`) are also removed and will 400. See `shared/model-migration.md` → Migrating to Opus 4.7 for the full breaking-change list.
-**Opus 4.6 — Adaptive thinking (recommended):** Use `thinking: {type: \"adaptive\"}`. Claude dynamically decides when and how much to think. No `budget_tokens` needed — `budget_tokens` is deprecated on Opus 4.6 and Sonnet 4.6 and should not be used for new code. Adaptive thinking also automatically enables interleaved thinking (no beta header needed). **When the user asks for \"extended thinking\", a \"thinking budget\", or `budget_tokens`: always use Opus 4.7 or 4.6 with `thinking: {type: \"adaptive\"}`. The concept of a fixed token budget for thinking is deprecated — adaptive thinking replaces it. Do NOT use `budget_tokens` for new 4.6/4.7 code and do NOT switch to an older model.** *Gradual-migration carve-out:* `budget_tokens` is still functional on Opus 4.6 and Sonnet 4.6 as a transitional escape hatch — if you're migrating existing code and need a hard token ceiling before you've tuned `effort`, see `shared/model-migration.md` → Transitional escape hatch. Note: this carve-out does **not** apply to Opus 4.7 — `budget_tokens` is fully removed there.
+**Opus 4.6 — Adaptive thinking (recommended):** Use `thinking: {type: \"adaptive\"}`. Claude dynamically decides when and how much to think. No `budget_tokens` needed — `budget_tokens` is deprecated on Opus 4.6 and Sonnet 4.6 and should not be used for new code. Adaptive thinking also automatically enables interleaved thinking (no beta header needed). **When the user asks for \"extended thinking\", a \"thinking budget\", or `budget_tokens`: always use Opus 4.7 or 4.6 with `thinking: {type: \"adaptive\"}`. The concept of a fixed token budget for thinking is deprecated — adaptive thinking replaces it. Don't use `budget_tokens` for new 4.6/4.7 code and don't switch to an older model.** *Gradual-migration carve-out:* `budget_tokens` is still functional on Opus 4.6 and Sonnet 4.6 as a transitional escape hatch — if you're migrating existing code and need a hard token ceiling before you've tuned `effort`, see `shared/model-migration.md` → Transitional escape hatch. Note: this carve-out does **not** apply to Opus 4.7 — `budget_tokens` is fully removed there.
 **Effort parameter (GA, no beta header):** Controls thinking depth and overall token spend via `output_config: {effort: \"low\"|\"medium\"|\"high\"|\"max\"}` (inside `output_config`, not top-level). Default is `high` (equivalent to omitting it). `max` is Opus-tier only (Opus 4.6 and later — not Sonnet or Haiku). Opus 4.7 adds `\"xhigh\"` (between `high` and `max`) — the best setting for most coding and agentic use cases on 4.7, and the default in Claude Code; use a minimum of `high` for most intelligence-sensitive work. Works on Opus 4.5, Opus 4.6, Opus 4.7, and Sonnet 4.6. Will error on Sonnet 4.5 / Haiku 4.5. On Opus 4.7, effort matters more than on any prior Opus — re-tune it when migrating. Combine with adaptive thinking for the best cost-quality tradeoffs. Lower effort means fewer and more-consolidated tool calls, less preamble, and terser confirmations — `high` is often the sweet spot balancing quality and token efficiency; use `max` when correctness matters more than cost; use `low` for subagents or simple tasks.
 
 **Opus 4.7 — thinking content omitted by default:** `thinking` blocks still stream but their text is empty unless you opt in with `thinking: {type: \"adaptive\", display: \"summarized\"}` (default is `\"omitted\"`). Silent change — no error. If you stream reasoning to users, the default looks like a long pause before output; set `\"summarized\"` to restore visible progress.
@@ -318,7 +318,7 @@ Live documentation URLs are in `shared/live-sources.md`.
 
 - Don't truncate inputs when passing files or content to the API. If the content is too long to fit in the context window, notify the user and discuss options (chunking, summarization, etc.) rather than silently truncating.
 - **Opus 4.7 thinking:** Adaptive only. `thinking: {type: \"enabled\", budget_tokens: N}` returns 400 on Opus 4.7 — `budget_tokens` is fully removed there (along with `temperature`, `top_p`, `top_k`). Use `thinking: {type: \"adaptive\"}`.
-- **Opus 4.6 / Sonnet 4.6 thinking:** Use `thinking: {type: \"adaptive\"}` — do NOT use `budget_tokens` for new 4.6 code (deprecated on both Opus 4.6 and Sonnet 4.6; for gradual migration of existing code, see the transitional escape hatch in `shared/model-migration.md` — note this carve-out does not apply to Opus 4.7). For older models, `budget_tokens` must be less than `max_tokens` (minimum 1024). This will throw an error if you get it wrong.
+- **Opus 4.6 / Sonnet 4.6 thinking:** Use `thinking: {type: \"adaptive\"}` — don't use `budget_tokens` for new 4.6 code (deprecated on both Opus 4.6 and Sonnet 4.6; for gradual migration of existing code, see the transitional escape hatch in `shared/model-migration.md` — note this carve-out does not apply to Opus 4.7). For older models, `budget_tokens` must be less than `max_tokens` (minimum 1024). This will throw an error if you get it wrong.
 - **4.6/4.7 family prefill removed:** Assistant message prefills (last-assistant-turn prefills) return a 400 error on Opus 4.6, Opus 4.7, and Sonnet 4.6. Use structured outputs (`output_config.format`) or system prompt instructions to control response format instead.
 - **Confirm migration scope before editing:** When a user asks to migrate code to a newer Claude model without naming a specific file, directory, or file list, **ask which scope to apply first** — the entire working directory, a specific subdirectory, or a specific set of files. Do not start editing until the user confirms. Imperative phrasings like \"migrate my codebase\", \"move my project to X\", \"upgrade to Sonnet 4.6\", or bare \"migrate to Opus 4.7\" are **still ambiguous** — they tell you what to do but not where, so ask. Proceed without asking only when the prompt names an exact file, a specific directory, or an explicit file list (\"migrate `app.py`\", \"migrate everything under `services/`\", \"update `a.py` and `b.py`\"). See `shared/model-migration.md` Step 0.
 - **`max_tokens` defaults:** Don't lowball `max_tokens` — hitting the cap truncates output mid-thought and requires a retry. For non-streaming requests, default to `~16000` (keeps responses under SDK HTTP timeouts). For streaming requests, default to `~64000` (timeouts aren't a concern, so give the model room). Only go lower when you have a hard reason: classification (`~256`), cost caps, or deliberately short outputs.

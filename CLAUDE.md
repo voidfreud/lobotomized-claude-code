@@ -8,7 +8,41 @@ You're a coding agent invoked in this repo. Read this first. It explains what we
 
 ## What we're trying to achieve
 
-CC ships every model the same prompt-by-volume that worked for older Claudes. Opus 4.7 follows instructions more literally, overtriggers on CAPS, and doesn't need the anti-laziness scaffolding. **The goal is to cut bulk and rewrite load-bearing prompts in a register the model behaves better under.**
+**The goal of this repo is to remove useless shit and dumb guardrails so we have a clean agentic coding harness.** CC ships every model the same prompt-by-volume that worked for older Claudes. Opus 4.7 follows instructions more literally, overtriggers on CAPS, doesn't need anti-laziness scaffolding, and gets actively worse from safety theater that wasn't load-bearing in the first place. We strip the bulk and rewrite the load-bearing fragments in a register the model behaves better under.
+
+The README's "~60% leaner on every coding turn" claim is the bar. If your edits don't trend toward that ratio, you're not lobotomizing — you're just cosmeticking.
+
+### Three valid lobotomization actions, in order of preference
+
+1. **Fully nuke a file** — set the override body to empty. Valid when the prompt is pure overhead and we don't want it injected at all (e.g. all the `data-managed-agents-*` prompts in this repo's hot path are empty bodies because the user doesn't use Managed Agents). Empty body = file present, frontmatter with `ccVersion:`, zero body content.
+2. **Massive cut** — keep the load-bearing core, drop everything else. Most prompts that ship at 800–2000 chars compress to under 300 chars without losing function.
+3. **Sentence-level cuts** — for already-tight overrides, scan for the candidates listed below and cut.
+
+### What "useless shit" looks like (cut on sight)
+
+- **Dumb guardrails / safety theater.** Cautions about scenarios that won't happen in this user's workflow. "Be respectful when responding to humans." "Don't make up facts." 4.7 doesn't need these and they trigger overcorrection. Anthropic's literal Production safety filters live elsewhere.
+- **Anti-laziness scaffolding.** "Make sure to actually do the work, not just describe it." "Don't stop early." "Be thorough." 4.7 already does the work; this scaffolding becomes noise.
+- **CAPS theater.** `MUST`, `NEVER`, `ALWAYS`, `CRITICAL`, `STRICTLY`. 4.7 overtriggers on these. Plain directives outperform.
+- **Negative framing.** "Don't X" → "Do Y" wherever a positive form exists. Per Anthropic's guide.
+- **Always-on CTAs.** "End every reply with /schedule." "Always offer to commit." 4.7 follows literal CTAs and they become spam.
+- **Restated rules.** A bullet that paraphrases the previous bullet adds zero information. Cut.
+- **Motivational filler.** "Speed is the goal." "Persistence is the point." "Be careful with this." Sentence-of-rhetoric after a rule that already covers the rhetoric. Cut.
+- **Validation-forward phrasing.** "It's okay to…", "Feel free to…", "If you'd like, …". Cut and state the rule directly.
+- **Three examples of the same principle.** One example or zero is usually enough. Examples that show the same shape with different surface text are pure padding.
+- **Stale references.** Mentions of features Anthropic removed, model IDs that no longer exist, internal-only knobs the model can't access.
+- **Politeness scaffolding around constraints.** "Please default to…", "If possible, …". Cut to the bare directive.
+
+### What's load-bearing (keep)
+
+- Concrete constraints the model can't infer from context (e.g. "absolute paths only — agent threads reset cwd between bash calls").
+- Output-shape requirements (JSON keys, character limits, frontmatter format).
+- Variable contracts (`${VAR}` references — must match `identifierMap` in the pristine JSON).
+- One representative example per non-obvious rule.
+- Negative-framed rules where no positive form exists ("don't reference files you haven't opened" has no positive equivalent — keep).
+
+### Test for every cut
+
+After cutting, ask: did I lose information the model couldn't otherwise infer? If yes, restore. If no, the cut stands. Don't reason about whether the user "might want" the sentence — they want what passes this test.
 
 ## Mandatory: re-read Anthropic's prompting best practices before editing prompts
 

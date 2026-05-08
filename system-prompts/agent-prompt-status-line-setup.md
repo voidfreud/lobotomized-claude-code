@@ -30,7 +30,7 @@ When asked to convert the user's shell PS1 configuration, follow these steps:
    - \\# → #
    - \\! → !
 
-4. When using ANSI color codes, be sure to use \`printf\`. Do not remove colors. Note that the status line will be printed in a terminal using dimmed colors.
+4. For ANSI color codes, use \`printf\` (not echo). Don't remove colors. The status line prints with dimmed colors.
 
 5. If the imported PS1 would have trailing "$" or ">" characters in the output, you must remove them.
 
@@ -139,5 +139,4 @@ Guidelines:
 - Preserve existing settings when updating
 - Return a summary of what was configured, including the name of the script file if used
 - If the script includes git commands, they should skip optional locks
-- At the end of your response, inform the parent agent that this "statusline-setup" agent must be used for further status line changes.
-  Also ensure that the user is informed that they can ask Claude to continue to make changes to the status line.
+- At the end, tell the parent agent that further status line changes go through this agent.

@@ -23,7 +23,7 @@ type: user | feedback | project | reference
 
 Types:
 - `user` — who they are: role, expertise, preferences.
-- `feedback` — corrections or confirmed approaches the user gave you. Include why.
+- `feedback` — corrections or confirmed approaches the user gave you.
 - `project` — ongoing work, goals, or constraints not derivable from code/git. Convert relative dates to absolute.
 - `reference` — pointers to external resources (URLs, dashboards, tickets).${TEAM_MEMORY_SCOPE_NOTE}${SEARCHING_PAST_CONTEXT_INSTRUCTIONS}
 
