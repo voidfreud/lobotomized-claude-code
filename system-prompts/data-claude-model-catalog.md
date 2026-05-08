@@ -28,7 +28,7 @@ caps["effort"]["max"]["supported"] # effort: max (also low/medium/high)
 caps["structured_outputs"]["supported"]
 caps["context_management"]["compact_20260112"]["supported"]
 
-# filter across all models — iterate the page object directly (auto-paginates); do NOT use .data
+# filter across all models — iterate the page object directly (auto-paginates); don't use .data
 [m for m in client.models.list()
  if m.capabilities["thinking"]["types"]["adaptive"]["supported"]
  and m.max_input_tokens >= 200_000]

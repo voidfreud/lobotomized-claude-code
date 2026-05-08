@@ -26,14 +26,9 @@ This tool is for terminal operations via PowerShell: git, npm, docker, and PS cm
 
 ${RENDER_COMMAND_NOTES_FN(COMMAND_NOTES)}
 
-Before executing the command, follow these steps:
-
-1. Directory Verification:
-   - If the command will create new directories or files, first use \`Get-ChildItem\` (or \`ls\`) to verify the parent directory exists and is the correct location
-
-2. Command Execution:
-   - Always quote file paths that contain spaces with double quotes
-   - Capture the output of the command.
+Before executing:
+- If creating new files/dirs, verify the parent dir exists with \`Get-ChildItem\` first.
+- Quote paths containing spaces with double quotes.
 
 PowerShell Syntax Notes:
    - Variables use $ prefix: $myVar = "value"
@@ -64,10 +59,9 @@ Second line with $literal dollar signs.
    - For arguments containing \`-\`, \`@\`, or other characters PowerShell parses as operators, use the stop-parsing token: \`git log --% --format=%H\`
 
 Usage notes:
-  - The command argument is required.
-  - You can specify an optional timeout in milliseconds (up to ${MAX_TIMEOUT_MS_FN()}ms / ${MAX_TIMEOUT_MS_FN()/60000} minutes). If not specified, commands will timeout after ${DEFAULT_TIMEOUT_MS_FN()}ms (${DEFAULT_TIMEOUT_MS_FN()/60000} minutes).
-  - It is very helpful if you write a clear, concise description of what this command does.
-  - If the output exceeds ${MAX_OUTPUT_CHARS_FN()} characters, output will be truncated before being returned to you.
+  - Optional timeout in ms (up to ${MAX_TIMEOUT_MS_FN()}ms / ${MAX_TIMEOUT_MS_FN()/60000} min); default ${DEFAULT_TIMEOUT_MS_FN()}ms (${DEFAULT_TIMEOUT_MS_FN()/60000} min).
+  - Write a clear, concise description of what the command does.
+  - Output exceeding ${MAX_OUTPUT_CHARS_FN()} chars is truncated.
 ${CUSTOM_USAGE_NOTE?CUSTOM_USAGE_NOTE+`
 `:""} - Avoid using PowerShell to run commands that have dedicated tools, unless explicitly instructed:
     - File search: Use ${GLOB_TOOL_NAME} (NOT Get-ChildItem -Recurse)
@@ -81,9 +75,9 @@ ${CUSTOM_USAGE_NOTE?CUSTOM_USAGE_NOTE+`
     - If the commands depend on each other and must run sequentially, chain them in a single ${POWERSHELL_TOOL_NAME} call (see edition-specific chaining syntax above).
     - Use \`;\` only when you need to run commands sequentially but don't care if earlier commands fail.
     - Don't use newlines to separate commands (newlines are ok in quoted strings and here-strings)
-  - Do NOT prefix commands with \`cd\` or \`Set-Location\` -- the working directory is already set to the correct project directory automatically.
+  - Don't prefix commands with \`cd\` or \`Set-Location\` — the working directory is already set automatically.
 ${CUSTOM_GIT_NOTES?CUSTOM_GIT_NOTES+`
 `:""} - For git commands:
-    - Prefer to create a new commit rather than amending an existing commit.
-    - Before running destructive operations (e.g., git reset --hard, git push --force, git checkout --), consider whether there is a safer alternative that achieves the same goal. Only use destructive operations when they are truly the best approach.
-    - Never skip hooks (--no-verify) or bypass signing (--no-gpg-sign, -c commit.gpgsign=false) unless the user has explicitly asked for it. If a hook fails, investigate and fix the underlying issue.
+    - Prefer a new commit over amending.
+    - Avoid destructive ops (\`git reset --hard\`, \`git push --force\`, \`git checkout --\`) unless they're the right approach.
+    - Don't skip hooks (\`--no-verify\`) or bypass signing (\`--no-gpg-sign\`) unless the user asked. If a hook fails, fix the underlying issue.

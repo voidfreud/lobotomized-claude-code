@@ -6,14 +6,12 @@ description: >-
   output volume, and selective filtering
 ccVersion: 2.1.119
 -->
-Start a background monitor that streams events from a long-running script. Each stdout line is an event — you keep working and notifications arrive in the chat. Events arrive on their own schedule and are not replies from the user, even if one lands while you\'re waiting for the user to answer a question.
+Start a background monitor that streams stdout events from a long-running script. Each line is a notification; events arrive on their own schedule (not user replies). Exit ends the watch.
 
 Pick by how many notifications you need:
-- **One** ("tell me when the server is ready / the build finishes") → use **Bash with `run_in_background`** and a command that exits when the condition is true, e.g. `until grep -q "Ready in" dev.log; do sleep 0.5; done`. You get a single completion notification when it exits.
-- **One per occurrence, indefinitely** ("tell me every time an ERROR line appears") → Monitor with an unbounded command (`tail -f`, `inotifywait -m`, `while true`).
-- **One per occurrence, until a known end** ("emit each CI step result, stop when the run completes") → Monitor with a command that emits lines and then exits.
-
-Your script\'s stdout is the event stream. Each line becomes a notification. Exit ends the watch.
+- **One** (server ready, build finishes) → **Bash with `run_in_background`** and an exit-when-true loop, e.g. `until grep -q "Ready in" dev.log; do sleep 0.5; done`.
+- **One per occurrence, indefinitely** (every ERROR line) → Monitor with an unbounded command (`tail -f`, `inotifywait -m`, `while true`).
+- **One per occurrence, until end** (each CI step until run completes) → Monitor with a command that emits lines then exits.
 
   # Each matching log line is an event
   tail -f /var/log/app.log | grep --line-buffered "ERROR"

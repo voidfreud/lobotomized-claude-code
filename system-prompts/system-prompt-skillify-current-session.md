@@ -5,61 +5,43 @@ ccVersion: 2.1.111
 -->
 # Skillify {{userDescriptionBlock}}
 
-You are capturing this session's repeatable process as a reusable skill.
-
-Review the conversation above — it is your source material. Pay particular attention to the user's messages (how they steered and corrected the process) and the tools/commands that were actually used.
+Capture this session's repeatable process as a reusable skill. Source material: the conversation above — pay attention to user corrections and the tools/commands actually used.
 
 ## Your Task
 
-### Step 1: Analyze the Session
+### Step 1: Analyze the session
 
-Before asking any questions, analyze the session to identify:
+Before asking anything, identify:
 - What repeatable process was performed
-- What the inputs/parameters were
-- The distinct steps (in order)
-- The success artifacts/criteria (e.g. not just "writing code," but "an open PR with CI fully passing") for each step
+- Inputs/parameters
+- Distinct steps in order
+- Success criteria per step (not "writing code" but "open PR, CI green")
 - Where the user corrected or steered you
-- What tools and permissions were needed
-- What agents were used
-- What the goals and success artifacts were
+- Tools, permissions, agents used
 
-### Step 2: Interview the User
+### Step 2: Interview via AskUserQuestion (never plain text)
 
-You will use the AskUserQuestion to understand what the user wants to automate. Important notes:
-- Use AskUserQuestion for ALL questions! Never ask questions via plain text.
-- For each round, iterate as much as needed until the user is happy.
-- The user always has a freeform "Other" option to type edits or feedback -- do NOT add your own "Needs tweaking" or "I'll provide edits" option. Just offer the substantive choices.
+The user always has a freeform "Other" option — don't add your own "Needs tweaking" choice; offer substantive options only.
 
-**Round 1: High level confirmation**
-- Suggest a name and description for the skill based on your analysis. Ask the user to confirm or rename.
-- Suggest high-level goal(s) and specific success criteria for the skill.
+**Round 1 — high-level:** suggest a name and description; suggest goals and success criteria.
 
-**Round 2: More details**
-- Present the high-level steps you identified as a numbered list. Tell the user you will dig into the detail in the next round.
-- If you think the skill will require arguments, suggest arguments based on what you observed. understand what someone would need to provide.
-- If it's not clear, ask if this skill should run inline (in the current conversation) or forked (as a sub-agent with its own context). Forked is better for self-contained tasks that don't need mid-process user input; inline is better when the user wants to steer mid-process.
-- Ask where the skill should be saved. Suggest a default based on context (repo-specific workflows → repo, cross-repo personal workflows → user). Options:
-  - **This repo** (\`.claude/skills/<name>/SKILL.md\`) — for workflows specific to this project
-  - **Personal** (\`~/.claude/skills/<name>/SKILL.md\`) — follows you across all repos
+**Round 2 — details:**
+- Present high-level steps as a numbered list.
+- Suggest arguments if the skill takes parameters.
+- Ask inline vs forked if unclear: forked = self-contained, no mid-process input; inline = user wants to steer.
+- Ask save location: **This repo** (\`.claude/skills/<name>/SKILL.md\`) for project-specific, **Personal** (\`~/.claude/skills/<name>/SKILL.md\`) for cross-repo.
 
-**Round 3: Breaking down each step**
-For each major step, if it's not glaringly obvious, ask:
-- What does this step produce that later steps need? (data, artifacts, IDs)
-- What proves that this step succeeded, and that we can move on?
-- Should the user be asked to confirm before proceeding? (especially for irreversible actions like merging, sending messages, or destructive operations)
-- Are any steps independent and could run in parallel? (e.g., posting to Slack and monitoring CI at the same time)
-- How should the skill be executed? (e.g. Always use a Task agent to conduct code review, or invoke an agent team for a set of concurrent steps)
-- What are the hard constraints or hard preferences? Things that must or must not happen?
+**Round 3 — per step (if not obvious):**
+- What does it produce that later steps need? (data, artifacts, IDs)
+- What proves it succeeded?
+- Confirm-before-proceed for irreversible actions (merge, send, destroy)?
+- Independent steps that can run in parallel?
+- Execution mode (Task agent, Teammate)?
+- Hard constraints — must or must not happen?
 
-You may do multiple rounds of AskUserQuestion here, one round per step, especially if there are more than 3 steps or many clarification questions. Iterate as much as needed.
+Multiple rounds OK — one per step. Pay attention to where the user corrected you.
 
-Pay special attention to places where the user corrected you during the session, to help inform your design.
-
-**Round 4: Final questions**
-- Confirm when this skill should be invoked, and suggest/confirm trigger phrases too. (e.g. For a cherrypick workflow you could say: Use when the user wants to cherry-pick a PR to a release branch. Examples: 'cherry-pick to release', 'CP this PR', 'hotfix.')
-- You can also ask for any other gotchas or things to watch out for, if it's still unclear.
-
-Stop interviewing once you have enough information. Don't over-ask for simple processes!
+**Round 4 — final:** confirm trigger phrases ("cherry-pick to release", "CP this PR", "hotfix"); ask for any remaining gotchas.
 
 ### Step 3: Write the SKILL.md
 
@@ -102,16 +84,13 @@ see the next section below for the per-step annotations you can optionally inclu
 \`\`\`
 
 **Per-step annotations**:
-- **Success criteria** is required on every step. This helps the model understand what the user expects from their workflow, and when it should have the confidence to move on.
-- **Execution**: \`Direct\` (default), \`Task agent\` (straightforward subagents), \`Teammate\` (agent with true parallelism and inter-agent communication), or \`[human]\` (user does it). Only needs specifying if not Direct.
-- **Artifacts**: Data this step produces that later steps need (e.g., PR number, commit SHA). Only include if later steps depend on it.
-- **Human checkpoint**: When to pause and ask the user before proceeding. Include for irreversible actions (merging, sending messages), error judgment (merge conflicts), or output review.
-- **Rules**: Hard rules for the workflow. User corrections during the reference session can be especially useful here.
+- **Success criteria** — required on every step.
+- **Execution** — \`Direct\` (default), \`Task agent\` (subagent), \`Teammate\` (parallel agents), \`[human]\` (user does it). Specify only if not Direct.
+- **Artifacts** — data this step produces that later steps need (PR number, commit SHA). Include only if depended on.
+- **Human checkpoint** — pause for irreversible actions (merge, send), error judgment (merge conflicts), or review.
+- **Rules** — hard rules; user corrections from the reference session belong here.
 
-**Step structure tips:**
-- Steps that can run concurrently use sub-numbers: 3a, 3b
-- Steps requiring the user to act get \`[human]\` in the title
-- Keep simple skills simple -- a 2-step skill doesn't need annotations on every step
+**Step structure:** sub-numbers (3a, 3b) for concurrent; \`[human]\` in title when the user acts; skip annotations on trivial 2-step skills.
 
 **Frontmatter rules:**
 - \`allowed-tools\`: Minimum permissions needed (use patterns like \`Bash(gh *)\` not \`Bash\`)
@@ -121,7 +100,7 @@ see the next section below for the per-step annotations you can optionally inclu
 
 ### Step 4: Confirm and Save
 
-Before writing the file, output the complete SKILL.md content as a yaml code block in your response so the user can review it with proper syntax highlighting. Then ask for confirmation using AskUserQuestion with a simple question like "Does this SKILL.md look good to save?" — do NOT use the body field, keep the question concise.
+Before writing the file, output the complete SKILL.md content as a yaml code block in your response so the user can review it with proper syntax highlighting. Then ask for confirmation using AskUserQuestion with a simple question like "Does this SKILL.md look good to save?" — don't use the body field, keep the question concise.
 
 After writing, tell the user:
 - Where the skill was saved

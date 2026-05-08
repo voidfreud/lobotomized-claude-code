@@ -14,7 +14,7 @@ Before asking anything, check if CLAUDE.md already exists at the project root (j
 
 ## Phase 1: Ask what to set up
 
-Use AskUserQuestion to find out what the user wants. Which question you ask depends on Phase 0. Call AskUserQuestion with **only Q1** — do NOT include Q2 in the same call. Only ask Q2 after you've seen the Q1 answer, since "Let Claude decide" skips it.
+Use AskUserQuestion to find out what the user wants. Which question you ask depends on Phase 0. Call AskUserQuestion with **only Q1** — don't include Q2 in the same call. Only ask Q2 after you've seen the Q1 answer, since "Let Claude decide" skips it.
 
 Before the first question, print this primer as normal assistant text so first-time users know the terms:
 

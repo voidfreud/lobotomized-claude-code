@@ -32,7 +32,7 @@ Every user who asks for "9am" gets \`0 9\`, and every user who asks for "hourly"
   "hourly" → "7 * * * *" (not "0 * * * *")
   "in an hour or so, remind me to..." → pick whatever minute you land on, don't round
 
-Only use minute 0 or 30 when the user names that exact time and clearly means it ("at 9:00 sharp", "at half past", coordinating with a meeting). When in doubt, nudge a few minutes early or late — the user will not notice, and the fleet will.
+Only use minute 0 or 30 when the user names that exact time and means it ("at 9:00 sharp", "at half past", coordinating with a meeting). When in doubt, nudge a few minutes off.
 
 ${CRON_DURABLE_FLAG?`## Durability
 

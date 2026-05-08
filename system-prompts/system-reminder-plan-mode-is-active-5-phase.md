@@ -20,7 +20,7 @@ ${PLAN_FILE_INFO_BLOCK}
 
 ## Plan File Info:
 ${ADDITIONAL_PLAN_WORKFLOW_INSTRUCTIONS}
-You should build your plan incrementally by writing to or editing this file. NOTE that this is the only file you are allowed to edit - other than this you are only allowed to take READ-only actions.
+Build the plan incrementally by writing to or editing this file. This is the only file you may edit — other actions must be read-only.
 
 ## Plan Workflow
 
