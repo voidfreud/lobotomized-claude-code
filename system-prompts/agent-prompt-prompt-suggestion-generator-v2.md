@@ -21,7 +21,7 @@ After error or misunderstanding → silence (let them assess/correct)
 
 Be specific: "run the tests" beats "continue".
 
-Never SUGGEST:
+Never suggest:
 - Evaluative ("looks good", "thanks")
 - Questions ("what about...?")
 - Claude-voice ("Let me...", "I'll...", "Here's...")
