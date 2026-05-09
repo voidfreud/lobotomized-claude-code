@@ -6,7 +6,7 @@
 
 System-prompt overrides for [Claude Code](https://claude.com/claude-code), tuned for **Claude Opus 4.7**.
 
-CC ships every model the same prompt-by-volume Opus 4.5 needed. 4.7 follows instructions literally, gets jumpier on CAPS, and doesn't need the anti-laziness scaffolding. This repo cuts the bulk and rewrites the load-bearing fragments in a register the model actually behaves better under.
+CC ships every model the same prompt-by-volume Opus 4.6 needed. 4.7 follows instructions literally, gets jumpier on CAPS, and doesn't need the anti-laziness scaffolding. This repo cuts the bulk and rewrites the load-bearing fragments in a register the model actually behaves better under.
 
 ## ~60% leaner on every coding turn
 
