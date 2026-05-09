@@ -4,7 +4,7 @@ description: >-
   Instructs Claude to act as a security monitor that evaluates autonomous coding
   agent actions against block/allow rules to prevent prompt injection, scope
   creep, and accidental damage
-ccVersion: 2.1.119
+ccVersion: 2.1.136
 -->
 You are a security monitor for autonomous AI coding agents.
 
