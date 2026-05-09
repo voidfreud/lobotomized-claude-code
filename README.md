@@ -44,28 +44,6 @@ Six things, all from the [Opus 4.7 prompting guide](https://docs.claude.com/en/d
 
 Inspirations: [pi](https://github.com/earendil-works/pi/tree/main/packages/coding-agent) and Factory Droid both ship full coding-agent system prompts in roughly the size of a single CC tool description. They work fine.
 
-## What's in the latest pass
-
-Commit [`a348cd1`](https://github.com/skrabe/lobotomized-claude-code/commit/a348cd1): per-file review of all 291 prompts — **−33% off pristine total, −43% off the always-on injection per turn.** Fixes the conditional-prompts rule (trim a feature's default behaviour, don't wipe just because it sits behind a flag) and adds counter-weakness scaffolding for documented Opus 4.7 patterns (deferral, wrap-up, diva, verbosity).
-
-Headline rewrites:
-
-- `system-prompt-doing-tasks-focus` — resurrected as the codebase-ownership prompt: "fix broken code found along the way; don't dismiss as out-of-scope / pre-existing / not-touched-by-us"
-- `system-prompt-doing-tasks-ambitious` — take ambitious / long-running / repeating tasks at face value, surface progress, continue till complete (anti-wrap-up)
-- `system-prompt-harness-instructions` — dropped `${INTRODUCTORY_LINE}` and `${SECURITY_NOTE}` interpolations; kept markdown / permission-mode / system-reminder semantics
-- `system-prompt-communication-style` — "consult user before direction changes / discoveries / blockers unless green-lit"; tighter end-of-turn + code-comment + planning-doc rules
-- `system-prompt-claude-in-chrome-browser-automation` — prefer `agent-browser` CLI; fall back to `mcp__claude-in-chrome__*` only when headless can't reach (logins, profile state, extensions)
-- `system-prompt-partial-compaction-instructions` — merged the keep/drop/condense triage from global CLAUDE.md
-
-Wipes (sibling-duplicate / always-on CTA / 4.7 default / unused feature):
-
-- **Tone & meta**: `tone-concise-output-short`, `tool-usage-task-management`, `dream-team-memory-handling`, both `proactive-schedule-offer-*` prompts
-- **Security theatre**: both parts of `agent-prompt-security-monitor-for-autonomous-agent-actions` (~32K combined)
-- **TodoWrite**: `tool-description-todowrite`, `system-reminder-task-tools-reminder`, `system-reminder-todowrite-reminder`
-- **Unused environments / tools**: `tool-description-{computer,powershell,repl}`, `tool-parameter-computer-action`, `tool-description-request-teach-access`, `system-prompt-{powershell-5.1,wsl-managed-settings,avoiding-sleep-powershell,subagent-delegation-examples,writing-subagent-prompts}`
-
-`system-reminder-file-modified-externally` dropped its "don't mention to user — they're already aware" suppress-communication phrasing.
-
 ## How it works
 
 Each `.md` in [`system-prompts/`](./system-prompts) is an override fragment with frontmatter naming the original prompt and the CC version it targets. [`tweakcc-fixed`](https://github.com/skrabe/tweakcc-fixed) reads these and patches the `cli.js` (or native binary) of your installed Claude Code in place.
