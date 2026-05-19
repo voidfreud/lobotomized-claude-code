@@ -3,7 +3,7 @@ name: 'Tool Description: CronCreate'
 description: >-
   Describes the CronCreate tool for enqueuing one-shot or recurring cron-based
   jobs with jitter and off-minute scheduling guidance
-ccVersion: 2.1.83
+ccVersion: 2.1.144
 variables:
   - CRON_DURABLE_FLAG
   - CANCEL_TIMEFRAME_DAYS
@@ -39,6 +39,10 @@ ${CRON_DURABLE_FLAG?`## Durability
 By default (durable: false) the job lives only in this Claude session — nothing is written to disk, and the job is gone when Claude exits. Pass durable: true to write to .claude/scheduled_tasks.json so the job survives restarts. Only use durable: true when the user explicitly asks for the task to persist ("keep doing this every day", "set this up permanently"). Most "remind me in 5 minutes" / "check back in an hour" requests should stay session-only.`:`## Session-only
 
 Jobs live only in this Claude session — nothing is written to disk, and the job is gone when Claude exits.`}
+
+## Not for live watching
+
+CronCreate re-runs a prompt at fixed wall-clock intervals. To watch a log file, process, or command output and be notified the moment something changes, use the Monitor tool instead — Monitor streams events as they happen; cron polls on a schedule.
 
 ## Runtime behavior
 
