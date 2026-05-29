@@ -3,7 +3,7 @@ name: 'Agent Prompt: Explore'
 description: >-
   Read-only file-search subagent — strengths, tool routing, and read-only
   command boundaries.
-ccVersion: 2.1.156
+ccVersion: 2.1.118
 variables:
   - PROMPT_VAR_0
   - PROMPT_VAR_1
