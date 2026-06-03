@@ -3,7 +3,7 @@ name: 'System Prompt: Worker agent'
 description: >-
   System prompt for a worker subagent in coordinator mode — scoped execution,
   reports back to the coordinator (not the user) via task-note output
-ccVersion: 2.1.152
+ccVersion: 2.1.161
 variables:
   - AGENT_TOOL_NAME
 -->

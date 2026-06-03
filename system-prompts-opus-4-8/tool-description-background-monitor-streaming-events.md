@@ -4,7 +4,7 @@ description: >-
   Describes the background monitor tool that streams stdout events from
   long-running scripts as chat notifications, with guidelines on script quality,
   output volume, and selective filtering
-ccVersion: 2.1.141
+ccVersion: 2.1.161
 -->
 Start a background monitor that streams stdout events from a long-running script. Each stdout line is an event that arrives as a chat notification while you keep working; events arrive on their own schedule and are not user replies, even if one lands while you await an answer. Exit ends the watch.
 
@@ -41,7 +41,7 @@ Pick by how many notifications you need:
 Don't use an unbounded command for a single notification. \`tail -f\`, \`inotifywait -m\`, and \`while true\` never exit on their own, so the monitor stays armed until timeout even after the event fires — use Bash \`run_in_background\` with an \`until\` loop instead. \`tail -f log | grep -m 1 ...\` does not fix this: if the log goes quiet after the match, \`tail\` never receives SIGPIPE and the pipeline hangs.
 
 Script quality:
-- Use \`grep --line-buffered\` in pipes — without it, pipe buffering delays events by minutes.
+- Every pipe stage must flush per line, or matches sit in its buffer for minutes: \`grep\` needs \`--line-buffered\`, \`awk\` needs \`fflush()\`. \`head\` can't flush — \`| head -N\` emits nothing until N matches accumulate, then ends the stream.
 - In poll loops, handle transient failures (\`curl ... || true\`) so one failed request doesn't kill the monitor.
 - Poll intervals: 30s+ for remote APIs (rate limits), 0.5-1s for local checks.
 - Write a specific \`description\` — it appears in every notification ("errors in deploy.log", not "watching logs").

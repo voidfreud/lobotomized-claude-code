@@ -4,7 +4,7 @@ description: >-
   Skill definition for the /catch-up periodic heartbeat that scans current
   priorities, triages actionable changes, reports a short digest, and updates
   catch-up state
-ccVersion: 2.1.119
+ccVersion: 2.1.161
 -->
 ---
 name: catch-up

@@ -3,7 +3,7 @@ name: 'Agent Prompt: Worker fork'
 description: >-
   System prompt for a forked worker sub-agent that executes a single directive
   from the parent agent and reports back concisely
-ccVersion: 2.1.140
+ccVersion: 2.1.161
 variables:
   - SYSTEM_TAG_NAME
   - WORKER_DIRECTIVE

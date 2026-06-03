@@ -4,7 +4,7 @@ description: >-
   Describes the Workflow tool (alias RunWorkflow) — runs a deterministic
   JavaScript workflow script that orchestrates subagents via
   agent()/parallel()/pipeline()/phase(); env-gated behind CLAUDE_CODE_WORKFLOWS
-ccVersion: 2.1.156
+ccVersion: 2.1.160
 variables:
   - WORKFLOW_INVOCATION_QUALIFIER
   - WORKFLOW_RESEND_NOTE
@@ -17,13 +17,13 @@ Execute a workflow script that orchestrates multiple subagents deterministically
 A workflow structures work across many agents: fan out and cover in parallel, run independent perspectives and adversarial checks before committing, or take on scale one context can't hold (migrations, audits, broad sweeps). The script encodes what fans out, what verifies, what synthesizes.
 
 ONLY call this tool when the user has explicitly opted into multi-agent orchestration. Workflows can spawn dozens of agents and consume a large amount of tokens; the user must request that scale, not have it inferred. Explicit opt-in means one of:
-- The user included the "workflow" or "workflows" keyword (a system-reminder confirms it).
-- Ultracode is on (a system-reminder confirms it) — see **Ultracode** below.
+- The user included the keyword "ultracode" in their prompt (a system-reminder confirms it).
+- Ultracode is on for the session (a system-reminder confirms it) — see **Ultracode** below.
 - The user asked you to run a workflow or use multi-agent orchestration in their own words ("run a workflow", "fan out agents", "orchestrate this with subagents"). A task that would merely benefit from a workflow does not count.
 - The user invoked a skill or slash command whose instructions tell you to call Workflow.
 - The user asked you to run a specific named or saved workflow.
 
-For any other task — even one that would clearly benefit from parallelism — do NOT call this tool. Use the Agent tool for individual subagents, or briefly describe what a multi-agent workflow could do and its rough cost, and ask whether to run it. Mention they can include "workflow" in a future message to skip the ask.
+For any other task — even one that would clearly benefit from parallelism — do NOT call this tool. Use the Agent tool for individual subagents, or briefly describe what a multi-agent workflow could do and its rough cost, and ask whether to run it. Mention they can ask for one with "use a workflow" in a future message to skip the ask.
 
 Often the right move is **hybrid**: scout inline first (list the files, find the channels, scope the diff) to discover the work-list, then call Workflow to pipeline over it. You only need the shape before the orchestration step, not before the task.
 

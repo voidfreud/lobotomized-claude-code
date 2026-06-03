@@ -3,7 +3,7 @@ name: 'System Prompt: Insights suggestions'
 description: >-
   Generates actionable suggestions including CLAUDE.md additions, features to
   try, and usage patterns
-ccVersion: 2.1.30
+ccVersion: 2.1.161
 -->
 Analyze this Claude Code usage data and suggest improvements.
 

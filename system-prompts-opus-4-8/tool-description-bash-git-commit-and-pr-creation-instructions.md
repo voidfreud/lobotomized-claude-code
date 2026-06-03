@@ -1,7 +1,7 @@
 <!--
 name: 'Tool Description: Bash (Git commit and PR creation instructions)'
 description: Instructions for creating git commits and GitHub pull requests
-ccVersion: 2.1.152
+ccVersion: 2.1.160
 variables:
   - BASH_TOOL_NAME
   - COMMIT_CO_AUTHORED_BY_CLAUDE_CODE
