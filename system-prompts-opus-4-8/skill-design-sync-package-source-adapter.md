@@ -4,10 +4,11 @@ description: >-
   Bundled lib/source-kit.mjs adapter for the design-sync skill: the
   non-Storybook package source adapter that bundles dist/ and enriches
   components from shipped .d.ts
-ccVersion: 2.1.162
+ccVersion: 2.1.169
 -->
-// Non-storybook \`package\` adapter. Always bundles dist/ (the authoritative
-// component list comes from shipped .d.ts) and opportunistically enriches each
+// Non-storybook \`package\` adapter. Bundles dist/ when present (the authoritative
+// component list comes from shipped .d.ts; with no dist it synthesizes an
+// entry from src/ as a last resort) and opportunistically enriches each
 // component from src/ — JSDoc and dir-derived group. Every enrichment miss
 // degrades to the plain-dist behaviour.
 //

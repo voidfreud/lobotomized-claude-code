@@ -3,7 +3,7 @@ name: 'Agent Prompt: /schedule slash command'
 description: >-
   Guides the user through scheduling, updating, listing, or running remote
   Claude Code agents on cron triggers via the Anthropic cloud API
-ccVersion: 2.1.118
+ccVersion: 2.1.169
 variables:
   - ONE_OFF_ENABLED_FN
   - ASK_USER_QUESTION_TOOL_NAME
@@ -21,9 +21,9 @@ variables:
   - CHECK_FEATURE_FLAG_FN
   - USER_REQUEST
 -->
-# Schedule Remote Agents
+# Schedule Cloud Agents
 
-Help the user schedule, update, list, or run remote Claude Code agents. These aren't local cron jobs — each routine spawns a fully isolated remote session (CCR) in Anthropic's cloud${ONE_OFF_ENABLED_FN?", either on a recurring cron schedule or once at a specific time":" on a recurring cron schedule"}. The agent runs in a sandbox with its own git checkout, tools, and optional MCP connections, and has no access to the user's local files, services, or environment variables.
+Help the user schedule, update, list, or run cloud Claude Code agents. These aren't local cron jobs — each routine spawns a fully isolated cloud session (CCR) in Anthropic's cloud${ONE_OFF_ENABLED_FN?", either on a recurring cron schedule or once at a specific time":" on a recurring cron schedule"}. The agent runs in a sandbox with its own git checkout, tools, and optional MCP connections, and has no access to the user's local files, services, or environment variables.
 
 ## First Step
 
@@ -138,7 +138,7 @@ Before computing any \`run_once_at\`, re-check the current time with \`date -u +
 
 ### CREATE a routine
 
-1. Understand the goal — what task, which repo(s)? Remind the user the agent runs remotely with no access to their local machine, files, or env vars.
+1. Understand the goal — what task, which repo(s)? Remind the user the agent runs in the cloud with no access to their local machine, files, or env vars.
 2. Craft the prompt — the agent starts with zero context, so make it self-contained: specific about what to do and what success looks like, which files/areas to focus on, and which actions to take (open PRs, commit, just analyze).
 3. Set the schedule — ask when and how often; convert their local time to UTC and confirm. ${ONE_OFF_ENABLED_FN?'For a one-time run use `run_once_at`; re-check the current time with `date -u` first, resolve the relative phrase against it, and confirm the absolute timestamp.':""}
 4. Choose the model — default to \`claude-sonnet-4-6\`; tell the user and ask if they want another.
@@ -155,7 +155,7 @@ Before computing any \`run_once_at\`, re-check the current time with \`date -u +
 - Always display cron in human-readable form.
 ${ONE_OFF_ENABLED_FN?'- When listing, `ended_reason: "run_once_fired"` means a one-shot already ran ("Ran" in the web UI); the user can re-arm it with a new `run_once_at`.\n':""}- Default to \`enabled: true\` unless the user says otherwise.
 - Accept GitHub URLs in any format and normalize to the full HTTPS URL (no .git suffix).
-${IS_GITHUB_REMINDER_ENABLED?`- If the request needs GitHub repo access (cloning, opening PRs, reading code), remind the user that ${IS_TRUTHY_FN("tengu_cobalt_lantern",!1)&&CHECK_FEATURE_FLAG_FN("allow_quick_web_setup")?"they should run /web-setup to connect their GitHub account (or install the Claude GitHub App on the repo) — otherwise the remote agent can't access it":"they need the Claude GitHub App installed on the repo — otherwise the remote agent can't access it"}.`:""}
+${IS_GITHUB_REMINDER_ENABLED?`- If the request needs GitHub repo access (cloning, opening PRs, reading code), remind the user that ${IS_TRUTHY_FN("tengu_cobalt_lantern",!1)&&CHECK_FEATURE_FLAG_FN("allow_quick_web_setup")?"they should run /web-setup to connect their GitHub account (or install the Claude GitHub App on the repo) — otherwise the cloud agent can't access it":"they need the Claude GitHub App installed on the repo — otherwise the cloud agent can't access it"}.`:""}
 ${USER_REQUEST?`
 ## User Request
 

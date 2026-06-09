@@ -4,34 +4,34 @@ description: >-
   Bundled lib/source-storybook.mjs adapter for the design-sync skill: builds
   storybook-static, parses index.json, and runs composeStories to extract story
   args
-ccVersion: 2.1.162
+ccVersion: 2.1.169
 -->
 // Storybook source adapter. Builds (or copies) storybook-static, parses
-// index.json into the component list, and runs node-side composeStories to
-// extract story args for .prompt.md examples. Returns the Source shape the
-// orchestrator and emitter consume.
+// index.json into the component list, resolves each component's story SOURCE
+// file, and pairs index story names to the module's export keys — the inputs
+// preview-gen-storybook.mjs needs to compile story modules as previews.
+// Story args are never evaluated here: stories run only in the browser,
+// against the shipped bundle.
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { titleParts } from './common.mjs';
 import { findStorybookDirs } from './detect.mjs';
-import { extractRenderSource, importStorybookReact, installBrowserStubs, nodeTranspile } from './stories.mjs';
-import { argsFromArgTypes, extractFromBuiltChunks } from './stories-static.mjs';
+import { storybookStubPlugin } from './story-imports.mjs';
 
-function pickStorybookDir({ STORIES_ROOT, INPUTS, PKG, SB_CONFIG_DIR }) {
+function pickStorybookDir({ INPUTS, PKG, SB_CONFIG_DIR }) {
   if (SB_CONFIG_DIR) return SB_CONFIG_DIR;
   // Many repos name the config dir via \`storybook dev -c <dir>\` in
   // package.json scripts — that's authoritative when present.
   try {
-    const scripts = JSON.parse(readFileSync(join(STORIES_ROOT, 'package.json'), 'utf8')).scripts ?? {};
+    const scripts = JSON.parse(readFileSync(join(INPUTS, 'package.json'), 'utf8')).scripts ?? {};
     for (const s of Object.values(scripts)) {
       const m = typeof s === 'string' && s.match(/\\bstorybook\\s+(?:dev|build)\\b[^;&|]*?(?:-c|--config-dir)[= ]+(\\S+)/);
-      if (m) return resolve(STORIES_ROOT, m[1]);
+      if (m) return resolve(INPUTS, m[1]);
     }
   } catch {}
-  const found = findStorybookDirs(STORIES_ROOT);
+  const found = findStorybookDirs(INPUTS);
   if (found.length > 1) {
     const pkgTail = PKG.split('/').pop();
     const ranked = found
@@ -43,89 +43,85 @@ function pickStorybookDir({ STORIES_ROOT, INPUTS, PKG, SB_CONFIG_DIR }) {
       })
       .sort((a, b) => b.score - a.score || a.depth - b.depth);
     console.error(
-      \`[MULTI_STORYBOOK] \${found.length} .storybook/ dirs under --stories-root; picked \${ranked[0].d}. \` +
+      \`[MULTI_STORYBOOK] \${found.length} .storybook/ dirs under --inputs; picked \${ranked[0].d}. \` +
         \`Override with --storybook-config <dir> if wrong. Found: \${found.join(', ')}\`,
     );
     return ranked[0].d;
   }
-  return found[0] ?? [join(STORIES_ROOT, '.storybook'), join(INPUTS, '.storybook')].find(existsSync);
+  return found[0] ?? (existsSync(join(INPUTS, '.storybook')) ? join(INPUTS, '.storybook') : undefined);
 }
 
-// Node-side args extraction for .prompt.md — transpile each story file with
-// packages:external (node's resolver dedupes), import in this process,
-// composeStories, read .args. We never render in node, so context dual-
-// instance doesn't matter. Best-effort: a story that throws just doesn't
-// contribute example args.
-async function extractArgs({ sbDir, sbStatic, csfComponents, nodeModules, skip }) {
-  const argsById = new Map();
-  const sbPreview = ['tsx', 'ts', 'jsx', 'js'].map((e) => join(sbDir, \`preview.\${e}\`)).find(existsSync);
-  const tmpDir = join(sbStatic, '.node-extract');
-  mkdirSync(tmpDir, { recursive: true });
-  installBrowserStubs();
-  // A story module that throws from a deferred callback (setTimeout/
-  // microtask at import time) must not take down the converter.
-  const swallow = (e) => console.error(\`  ! node-side args (async): \${String(e).split('\\n')[0]}\`);
-  process.on('uncaughtException', swallow);
-  process.on('unhandledRejection', swallow);
-  const sb = await importStorybookReact({ nodeModules, sbDir });
-  let composeStories = sb?.composeStories, setProjectAnnotations = sb?.setProjectAnnotations;
+// Storybook derives a story's display name from its export key (startCase);
+// squash-compare pairs them back without re-implementing the exact algorithm.
+// storyName overrides break the pairing for that story → it stays unpaired
+// and its cell is omitted; a component with no paired stories shows the
+// floor card.
+const squash = (s) => String(s ?? '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+
+// Module export keys WITHOUT evaluating the module: esbuild parses the file
+// (bundle:false) and reports exports in the metafile. ~10ms per story file.
+async function storyModuleExports(absPath) {
+  const { build } = await import('esbuild');
   try {
-    if (sbPreview && setProjectAnnotations) {
-      const pv = join(tmpDir, 'preview.mjs');
-      await nodeTranspile(sbPreview, pv);
-      const pmod = await import(pathToFileURL(pv).href);
-      setProjectAnnotations(pmod.default ?? pmod);
-    }
+    const r = await build({
+      entryPoints: [absPath], bundle: false, write: false, metafile: true,
+      format: 'esm', platform: 'neutral', logLevel: 'silent', jsx: 'preserve',
+      // JSX-in-.js story files are a common convention; jsx is a strict
+      // syntax superset of js, so this is safe for plain files too.
+      loader: { '.js': 'jsx' },
+    });
+    const out = Object.values(r.metafile.outputs)[0];
+    return (out?.exports ?? []).filter((e) => e !== 'default');
   } catch (e) {
-    console.error(\`  ! node-side setup: \${String(e).split('\\n')[0]} — .prompt.md will have story names only\`);
+    console.error(\`  ! story parse failed: \${relative(process.cwd(), absPath)}: \${String(e?.errors?.[0]?.text ?? e?.message ?? e).split('\\n')[0]}\`);
+    return [];
   }
-  if (composeStories) {
-    const shared = {};
-    for (const ip of new Set(csfComponents.flatMap((c) => [...c.importPaths]))) {
-      const abs = resolve(dirname(sbDir), ip);
-      if (!existsSync(abs)) continue;
-      const out = join(tmpDir, createHash('sha256').update(ip).digest('hex').slice(0, 12) + '.mjs');
-      try {
-        await nodeTranspile(abs, out, shared);
-        const mod = await import(pathToFileURL(out).href);
-        if (!mod.default) continue;
-        const raw = readFileSync(abs, 'utf8');
-        const compName = mod.default?.component?.displayName ?? mod.default?.component?.name
-          ?? mod.default?.title?.split('/').pop();
-        for (const [exportName, S] of Object.entries(composeStories(mod))) {
-          if (skip?.has(S.id)) continue;
-          let args = S.args;
-          // Manual argTypes (rare, but free when present).
-          if ((!args || !Object.keys(args).length) && S.argTypes) {
-            args = { ...argsFromArgTypes(S.argTypes), ...(args ?? {}) };
-          }
-          const hasArgs = args && Object.keys(args).length > 0;
-          // addon-docs injects originalSource at build time; node-side this is
-          // usually absent, but cheap to prefer when it's there.
-          const sbSource = S.parameters?.docs?.source?.originalSource;
-          const renderSource = !hasArgs && compName
-            ? (typeof sbSource === 'string' ? sbSource : null)
-              ?? extractRenderSource(raw, exportName, compName)
-            : null;
-          argsById.set(S.id, { args, storyName: S.storyName, renderSource });
-        }
-      } catch (e) {
-        // Best-effort — a story file that throws at import just doesn't
-        // contribute example args. Log so the aggregate miss count is
-        // explainable. esbuild wraps the real message under e.errors[0].text.
-        const msg = e?.errors?.[0]?.text ?? e?.message ?? String(e);
-        console.error(\`  ! story import failed: \${ip}: \${String(msg).split('\\n')[0]}\`);
-      }
+}
+
+// Resolve each component's story source file(s) and pair its index stories
+// to module export keys (c.storySrc / c.srcSha / c.storyIds[].exportKey).
+// A component's stories may live in ONE file or be split across many files
+// sharing a title — each story pairs against the exports of its OWN file
+// (its index.json importPath). index.json importPaths are relative to the
+// storybook PROJECT root — the .storybook dir's parent when we know it; cwd
+// and the static dir's parent as fallbacks (--storybook-static-only runs).
+async function resolveStorySources(csfComponents, sbDir, sbStatic) {
+  const bases = [...new Set([
+    ...(sbDir ? [dirname(sbDir)] : []),
+    process.cwd(),
+    ...(sbStatic ? [dirname(sbStatic)] : []),
+  ])];
+  let paired = 0, total = 0;
+  for (const c of csfComponents) {
+    const srcByIp = new Map();
+    for (const ip of c.importPaths ?? []) {
+      const abs = bases.map((b) => resolve(b, ip)).find(existsSync);
+      if (abs) srcByIp.set(ip, abs);
     }
-    console.error(\`  node-side args: \${argsById.size} stories extracted\${argsById.size === 0 ? ' — all previews will fall through to the .d.ts scaffold' : ''}\`);
+    const srcs = [...new Set(srcByIp.values())];
+    if (!srcs.length) continue;
+    c.storySrc = srcs[0];
+    // srcSha spans ALL story files — an edit to any of them is a contract
+    // change for the component.
+    const h = createHash('sha256');
+    for (const f of srcs) h.update(readFileSync(f));
+    c.srcSha = h.digest('hex').slice(0, 12);
+    const keysByFile = new Map();
+    for (const f of srcs) {
+      keysByFile.set(f, new Map((await storyModuleExports(f)).map((k) => [squash(k), k])));
+    }
+    for (const s of c.storyIds ?? []) {
+      total++;
+      const f = srcByIp.get(s.importPath) ?? srcs[0];
+      // Display name first; fall back to the story ID's tail — storybook
+      // derives it from the export key, so it survives \`name:\` overrides
+      // ("button--my-story" pairs to export MyStory whatever the name says).
+      const k = keysByFile.get(f)?.get(squash(s.name))
+        ?? keysByFile.get(f)?.get(squash(String(s.id ?? '').split('--').pop() ?? ''));
+      if (k) { s.exportKey = k; s.storySrc = f; paired++; }
+    }
   }
-  // Let deferred callbacks fire while swallow is still installed, then
-  // restore the default handlers so later real errors aren't masked.
-  await new Promise((r) => setTimeout(r, 250));
-  process.off('uncaughtException', swallow);
-  process.off('unhandledRejection', swallow);
-  try { rmSync(tmpDir, { recursive: true, force: true }); } catch {}
-  return argsById;
+  console.error(\`  story sources: \${paired}/\${total} stories paired to module exports\`);
 }
 
 export async function resolveStorybook(ctx) {
@@ -136,9 +132,10 @@ export async function resolveStorybook(ctx) {
     console.error(\`--storybook-static \${sbStatic} has no index.json\`);
     sbStatic = null;
   }
-  // storybook-static is parsed for index.json + story-args extraction and the
-  // CSS fallback, then discarded — previews render self-contained from the
-  // bundle. Built into a dot-prefixed dir so it's never uploaded.
+  // storybook-static is parsed for index.json (component list + story source
+  // pairing) and the CSS fallback, then discarded — previews render
+  // self-contained from the bundle. Built into a dot-prefixed dir so it's
+  // never uploaded.
   if (!sbStatic && sbDir) {
     sbStatic = resolve(OUT, '.sb-static');
     console.error(\`  running: npx storybook build -c \${sbDir} -o \${sbStatic}\`);
@@ -153,7 +150,6 @@ export async function resolveStorybook(ctx) {
     }
   }
   const csfComponents = [];
-  let argsById = new Map();
   if (sbStatic) {
     const idx = JSON.parse(readFileSync(join(sbStatic, 'index.json'), 'utf8'));
     // Multi-package Storybooks can have a 'TextField' from each sibling
@@ -171,30 +167,21 @@ export async function resolveStorybook(ctx) {
       if ((e.tags ?? []).includes('!dev') || (e.tags ?? []).includes('deprecated')) continue;
       if (/deprecated/i.test(e.importPath ?? '')) continue;
       const { name: compName, group } = titleParts(e.title, titleMap, exportedSet);
+      if (compName === null) continue; // titleMap {Name: null} = excluded
       if (!byComp.has(compName)) byComp.set(compName, { name: compName, group, own: isOwn(e), storyIds: [], importPaths: new Set() });
       const comp = byComp.get(compName);
       if (comp.own && !isOwn(e)) continue; // own-package stories win the name
-      comp.storyIds.push({ id: e.id, name: e.name });
+      comp.storyIds.push({ id: e.id, name: e.name, importPath: e.importPath });
       if (e.importPath) comp.importPaths.add(e.importPath);
     }
     for (const c of byComp.values()) csfComponents.push(c);
     console.error(
       \`  storybook-static: \${Object.keys(idx.entries ?? {}).length} entries → \${csfComponents.length} components\`,
     );
-    // Built chunks first — storybook's own build has args/argTypes composed
-    // onto the story objects. Whatever that fills, the node-side transpile
-    // path below skips.
-    const tmpDir = join(sbStatic, '.node-extract');
-    mkdirSync(tmpDir, { recursive: true });
-    argsById = await extractFromBuiltChunks(sbStatic, csfComponents, tmpDir);
-    if (sbDir) {
-      const fallback = await extractArgs({ sbDir, sbStatic, csfComponents, nodeModules: ctx.NODE_MODULES, skip: argsById });
-      for (const [k, v] of fallback) if (!argsById.has(k)) argsById.set(k, v);
-    }
+    await resolveStorySources(csfComponents, sbDir, sbStatic);
   } else {
     console.error(\`[SB_BUILD_FAIL] no storybook-static and no .storybook/ dir found — pass --storybook-static <dir> or run from a repo with .storybook/.\`);
   }
-  for (const c of csfComponents) c.argsById = argsById;
   return { shape: 'storybook', entry, components: csfComponents, sbStatic, sbDir };
 }
 
@@ -203,25 +190,54 @@ export async function resolveStorybook(ctx) {
 // provider chain Storybook does. Best-effort: bail (return false) if there's
 // no decorator array or the bundle fails — cfg.provider remains the manual
 // fallback. Imports of the DS package itself are shimmed to window.<GLOBAL>
-// so the decorator's <AppProvider> is the same instance the previews use.
+// so the decorator's provider components are the same instances the
+// previews use.
 export async function bundlePreviewDecorators({ sbDir, OUT, NODE_MODULES, PKG, PKG_DIR, GLOBAL }) {
   if (!sbDir) return false;
   const sbPreview = ['tsx', 'ts', 'jsx', 'js'].map((e) => join(sbDir, \`preview.\${e}\`)).find(existsSync);
-  if (!sbPreview || !/\\bdecorators\\s*[:=]/.test(readFileSync(sbPreview, 'utf8'))) return false;
+  if (!sbPreview) {
+    console.error(\`  (preview decorators: no preview.{tsx,ts,jsx,js} in \${sbDir} — nothing to bundle; cfg.provider is the manual path)\`);
+    return false;
+  }
+  // \\bdecorators\\b (not just \`decorators:\` / \`decorators=\`) — re-export forms
+  // like \`export { decorators }\` are real; a false positive is harmless (the
+  // wrapper finds no array at runtime and __dsDecorate stays null).
+  if (!/\\bdecorators\\b/.test(readFileSync(sbPreview, 'utf8'))) {
+    console.error(\`  (preview decorators: \${sbPreview} never mentions decorators — nothing to bundle; if providers live elsewhere, set cfg.provider)\`);
+    return false;
+  }
   const { build } = await import('esbuild');
   const entry = join(OUT, '.preview-decorators-entry.mjs');
   // The decorator receives (Story, ctx). We pass a Story fn that returns the
-  // already-built inner element and an empty-shaped ctx; decorators that read
-  // ctx.globals/args just get undefined-y defaults.
+  // already-built inner element and a minimal ctx whose globals are seeded
+  // from globalTypes defaultValues / initialGlobals — theming decorators read
+  // ctx.globals.theme et al, and storybook's own default render uses exactly
+  // these values. Single-function decorators are legal CSF ([].concat).
+  // A decorator returning undefined (an addon stub, a manager-side noop)
+  // falls through to the inner render with one console warning — otherwise
+  // one unrecognized addon silently blanks every preview.
   writeFileSync(entry, \`import * as pv from \${JSON.stringify(sbPreview)};
-var ds = ((pv.default && pv.default.decorators) || pv.decorators || []).filter(function(d){return typeof d==="function"});
-var ctx = {args:{},argTypes:{},globals:{},parameters:{},viewMode:"story",loaded:{}};
+var ds = [].concat((pv.default && pv.default.decorators) || pv.decorators || []).filter(function(d){return typeof d==="function"});
+if (!ds.length) console.warn("[ds] preview decorators: the preview module mentions decorators but exposed none at runtime (indirect export?) — previews render without the provider chain; set cfg.provider if components need one");
+var GT = (pv.default && pv.default.globalTypes) || pv.globalTypes || {};
+var G = {};
+for (var k in GT) { if (GT[k] && GT[k].defaultValue !== undefined) G[k] = GT[k].defaultValue; }
+var IG = (pv.default && pv.default.initialGlobals) || pv.initialGlobals || {};
+for (var k2 in IG) { G[k2] = IG[k2]; }
+var ctx = {args:{},argTypes:{},globals:G,parameters:{},viewMode:"story",loaded:{},id:"",name:"",title:"",kind:"",componentId:""};
 // reduce (not reduceRight): Storybook composes first-in-array = innermost.
 // The chain runs inside a rendered component so decorator hooks have a
 // dispatcher — calling decorators eagerly (outside render) would null it.
 window.__dsDecorate = !ds.length ? null : function(el){
   return window.React.createElement(function(){
-    return ds.reduce(function(inner,d){return d(function(){return inner},ctx)}, el);
+    return ds.reduce(function(inner,d){
+      var out = d(function(){return inner}, ctx);
+      if (out === undefined) {
+        if (!window.__dsDecoratorWarned) { window.__dsDecoratorWarned = 1; console.warn("[ds] a preview decorator returned undefined — skipped (addon stub?)"); }
+        return inner;
+      }
+      return out;
+    }, el);
   });
 };\`);
   // Shim the DS package (by name, or by a relative path that resolves under
@@ -247,16 +263,11 @@ window.__dsDecorate = !ds.length ? null : function(el){
       }));
     },
   };
-  // Storybook-runtime/addon/msw packages are preview-time only. Stub to {}
-  // instead of externalizing — \`external\` in IIFE output leaves a bare
-  // require() that throws in-browser, so the bundle fails to evaluate.
-  const stubEmpty = {
-    name: 'sb-stub',
-    setup(b) {
-      b.onResolve({ filter: /^(@storybook\\/|storybook(\\/|$)|msw(\\/|$)|@mswjs\\/)/ }, (a) => ({ path: a.path, namespace: 'stub' }));
-      b.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: 'module.exports={}', loader: 'js' }));
-    },
-  };
+  // Storybook-runtime/addon/msw packages are preview-time only. Stubbed (not
+  // externalized — \`external\` in IIFE output leaves a bare require() that
+  // throws in-browser); manager-api gets functional no-ops. One definition,
+  // shared with preview compilation, lives in story-imports.mjs.
+  const stubEmpty = storybookStubPlugin();
   // React shim for the decorator bundle: read window.React/ReactDOM at USE
   // time (getters), not via \`var R = window.React\` at thunk-define time —
   // esbuild can hoist the CJS thunk call before the page global is live.
@@ -293,6 +304,10 @@ module.exports=\${proxy('window.React', '{jsx:jsx,jsxs:jsx,jsxDEV:jsx,Fragment:u
       bundle: true, format: 'iife', platform: 'browser', target: 'es2020',
       jsx: 'automatic', loader: { '.js': 'jsx', '.json': 'json' },
       nodePaths: [NODE_MODULES], plugins: [reactGlobal, dsShim, stubEmpty],
+      // Same defines as the preview compile — provider chains routinely guard
+      // on NODE_ENV/__DEV__, and esbuild leaves undefined identifiers to
+      // throw at load time.
+      define: { 'process.env.NODE_ENV': '"development"', __DEV__: 'true' },
       logLevel: 'silent',
     });
     console.error(\`  preview-decorators.js: bundled from \${relative(pkgRoot, sbPreview)}\`);
