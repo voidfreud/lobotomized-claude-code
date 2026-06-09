@@ -106,7 +106,7 @@ Some directory entries have no `url` because the endpoint is dynamic — the adm
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/",
       "headers": {
-        "Authorization": "Bearer \${GITHUB_TOKEN}"
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
       }
     },
     "asana": {
@@ -125,8 +125,8 @@ Some directory entries have no `url` because the endpoint is dynamic — the adm
       "type": "http",
       "url": "https://api.datadoghq.com/mcp",
       "headers": {
-        "DD-API-KEY": "\${DATADOG_API_KEY}",
-        "DD-APPLICATION-KEY": "\${DATADOG_APP_KEY}"
+        "DD-API-KEY": "${DATADOG_API_KEY}",
+        "DD-APPLICATION-KEY": "${DATADOG_APP_KEY}"
       }
     }
   },
