@@ -10,6 +10,6 @@ placeholders:
 -->
 [SYSTEM NOTIFICATION - NOT USER INPUT]
 This is an automated background-task event, NOT a message from the user.
-Do NOT interpret this as user acknowledgement, confirmation, or response to any pending question.
+Don't read it as user acknowledgement, confirmation, or an answer to any pending question.
 
 {{content}}

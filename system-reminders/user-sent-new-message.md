@@ -10,3 +10,5 @@ placeholders:
 -->
 User added mid-turn:
 {{message}}
+
+After finishing your current task, address this message.

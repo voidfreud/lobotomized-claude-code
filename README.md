@@ -14,10 +14,26 @@ There are two prompt sets — pick the one matching your model:
 
 | Your model | Use this folder |
 |---|---|
+| **Claude Fable 5** | [`system-prompts-fable-5/`](./system-prompts-fable-5) ← re-judged file-by-file against the Fable 5 / Mythos 5 system card and Anthropic's Fable prompting guide |
 | **Claude Opus 4.8** | [`system-prompts-opus-4-8/`](./system-prompts-opus-4-8) ← reshaped from scratch against the Opus 4.8 system card |
 | **Claude Opus 4.7 / 4.6** | [`system-prompts-opus-4-7/`](./system-prompts-opus-4-7) |
 
 Not sure? Run `claude --version` and check which Opus you're on. The install below symlinks whichever set you choose; switching later is one `ln -sfn`.
+
+## What you get (Fable 5 set)
+
+| | Leaner by |
+|---|---|
+| **Always-on prompts** (system prompt + tool descriptions, inject every coding turn) | **~40%** |
+| Whole catalogued corpus (371 prompts) | **~24%** |
+| **37 prompts suppressed entirely** | unused features (Managed Agents, PowerShell, WSL), always-on upsells, duplicates |
+
+The Fable set cuts *differently* than the 4.8 set, per the model's measured deltas:
+
+- **Cut harder:** generic anti-injection boilerplate (Fable's injection resistance is ~2× better than 4.8 and classifier-backed), overrefusal hedging, moralizing, "be thorough" motivation, capability hand-holding, enumerated do/don't checklists, and terseness pressure — Fable over-compresses on its own; readable beats terse.
+- **Kept and strengthened** (Fable's measured regressions vs 4.8): verify-before-claiming-done and report-failures-plainly, don't fabricate missing inputs, call mistakes mistakes, a thin irreversible-ops core plus don't-bypass-blockers, scope discipline, and persistence (no silent early-stop).
+- **Restored to pristine** where Anthropic pre-tuned the prompt for Fable (outcome-first communication, autonomous-operation rules) — the old trims would have deleted content that now earns its place.
+- **Reworded corpus-wide:** "show your thinking / explain your reasoning" phrasing, which can trip Fable's `reasoning_extraction` classifier and silently degrade the session to Opus 4.8.
 
 ## What you get (Opus 4.8 set)
 
@@ -42,8 +58,8 @@ The Opus 4.8 set is shaped against the model's system card, not by taste:
 ```bash
 git clone https://github.com/skrabe/lobotomized-claude-code ~/.tweakcc/lobotomized-claude-code
 
-# pick your set (Opus 4.8 shown; use system-prompts-opus-4-7 for 4.7/4.6)
-ln -sfn ~/.tweakcc/lobotomized-claude-code/system-prompts-opus-4-8 ~/.tweakcc/system-prompts
+# pick your set (Fable 5 shown; use system-prompts-opus-4-8 or -opus-4-7 for older models)
+ln -sfn ~/.tweakcc/lobotomized-claude-code/system-prompts-fable-5 ~/.tweakcc/system-prompts
 ln -sfn ~/.tweakcc/lobotomized-claude-code/system-reminders        ~/.tweakcc/system-reminders
 
 # apply with the patcher

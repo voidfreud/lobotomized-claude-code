@@ -7,4 +7,4 @@ ccVersion: 2.1.141
 placeholders:
   - new_date
 -->
-The date has changed. Today's date is now {{new_date}}. DO NOT mention this to the user explicitly because they are already aware.
+The date has changed: today is {{new_date}}. The user is already aware — no need to mention it.

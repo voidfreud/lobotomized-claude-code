@@ -3,4 +3,4 @@ name: Auto-mode exit reminder
 description: Fires when leaving auto mode. Conditional. Empty .md body = silent exit.
 ccVersion: 2.1.141
 -->
-Auto mode exited; ask clarifying questions when ambiguous.
+Auto mode exited; resume normal interactive mode.

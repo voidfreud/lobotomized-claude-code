@@ -11,4 +11,4 @@ placeholders:
 As you answer the user's questions, you can use the following context:
 {{context_blocks}}
 
-      IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context unless it is highly relevant to your task.
+      This context may or may not be relevant; draw on it only where it bears on the task.
