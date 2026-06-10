@@ -25,7 +25,7 @@ ${TOOL_PARAMETERS_DESCRIPTION}
 
 - Include a short description of what the agent will do${DESCRIPTION_FORMAT_NOTE}
 - The agent returns one message; the user does not see it — relay a concise summary in your reply.
-- The agent's summary describes what it intended, not necessarily what it did. When it writes or edits code, check the actual changes before reporting the work done.${!IS_TRUTHY_FN(PROCESS_OBJECT.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)&&!IS_SUBAGENT_CONTEXT_FN()&&!HAS_SUBAGENT_TYPES?`
+- The agent's summary describes what it intended, not necessarily what it did. When it writes or edits code, check the actual changes before reporting the work done.${!ENVIRONMENT_CONFIG.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS&&!IS_SUBAGENT_CONTEXT_FN()&&!HAS_SUBAGENT_TYPES?`
 - run_in_background launches the agent and notifies you on completion — don't poll. Use foreground (default) when you need the result to proceed; background for genuinely independent parallel work.`:""}
 - To resume an agent, use ${SEND_MESSAGE_TOOL_NAME} with its ID or name as the \`to\` field — that restores full context. A new ${AGENT_TOOL_NAME} call${HAS_SUBAGENT_TYPES?" with a subagent_type":""} starts fresh, so make the prompt self-contained.
 - Tell the agent whether to write code or just research (search, reads, fetches)${HAS_SUBAGENT_TYPES?"":", since it doesn't see the user's intent"}.

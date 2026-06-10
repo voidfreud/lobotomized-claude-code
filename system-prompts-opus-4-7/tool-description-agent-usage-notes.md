@@ -3,13 +3,12 @@ name: 'Tool Description: Agent (usage notes)'
 description: >-
   Usage notes and instructions for the Task/Agent tool, including guidance on
   launching subagents, background execution, resumption, and worktree isolation
-ccVersion: 2.1.105
+ccVersion: 2.1.160
 variables:
   - TOOL_BASE_DESCRIPTION
   - TOOL_PARAMETERS_DESCRIPTION
   - DESCRIPTION_FORMAT_NOTE
-  - IS_TRUTHY_FN
-  - PROCESS_OBJECT
+  - ENVIRONMENT_CONFIG
   - IS_SUBAGENT_CONTEXT_FN
   - HAS_SUBAGENT_TYPES
   - SEND_MESSAGE_TOOL_NAME
@@ -26,7 +25,7 @@ ${TOOL_PARAMETERS_DESCRIPTION}
 Usage:
 - Always include a short description of what the agent will do${DESCRIPTION_FORMAT_NOTE}
 - The agent's result isn't visible to the user — relay a short summary in your reply.
-- Verify the result. The summary describes intent, not necessarily what landed.${!IS_TRUTHY_FN(PROCESS_OBJECT.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)&&!IS_SUBAGENT_CONTEXT_FN()&&!HAS_SUBAGENT_TYPES?`
+- Verify the result. The summary describes intent, not necessarily what landed.${!ENVIRONMENT_CONFIG.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS&&!IS_SUBAGENT_CONTEXT_FN()&&!HAS_SUBAGENT_TYPES?`
 - run_in_background: launch and you'll be notified on completion. Don't poll.
 - Foreground when you need the result to proceed; background for parallel work.`:""}
 - To resume an agent, use ${SEND_MESSAGE_TOOL_NAME} with its ID. A new ${AGENT_TOOL_NAME} call${HAS_SUBAGENT_TYPES?" with a subagent_type":""} starts fresh — make the prompt self-contained.
