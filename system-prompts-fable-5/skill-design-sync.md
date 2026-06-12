@@ -5,7 +5,7 @@ description: >-
   This runs a converter that bundles the real component code (from Storybook or
   a bare package) and uploads it. Use when the user runs /design-sync or says
   "sync my design system to Claude Design".
-ccVersion: 2.1.172
+ccVersion: 2.1.175
 -->
 ---
 name: design-sync
@@ -96,3 +96,20 @@ Every later batch that passes the done-bar: `write_files` its `components/<group
 3. **Sentinel re-arm, then `_ds_sync.json` absolutely last**, in its own `write_files` call — the anchor must only ever vouch for a fully-applied state, and it goes after the deletes so a failed delete can't leave remote files the anchor no longer sees. Then output the project URL with the final summary.
 
 A mid-run abort anywhere on this path leaves the project un-anchored — the documented safe state: the next sync re-verifies and re-uploads everything. As in the sub-skill upload sections, any write/delete failure that retries don't clear means STOP — no sentinel re-arm, no `_ds_sync.json`.
+
+## Author the conventions header
+
+Write down what you learned making the previews render — wrapping, provider/theme setup, load order, the mistakes that silently produce unstyled output. The file is prepended to the generated README (via the `readmeHeader` config key) and inlined into a *design agent*'s system prompt — a model that builds apps WITH this library but never makes previews, runs the build, or reads the source; it gets the README and the bound artifacts, nothing else. It follows concrete enumerated guidance and cannot follow what isn't there: name the tokens and it uses them, leave the class vocabulary unnamed and it invents its own. Every sentence must pass one test: *could the design agent act on this without guessing?* ("Follow the design system's conventions" fails — delete it and write the convention.)
+
+**What to write** — four concerns, in whatever structure serves this DS:
+
+- **Wrapping and setup.** If components need a provider/root wrapper to be styled (usually where tokens and theme live), name it, say what breaks without it, show the wrap in a minimal snippet — plus theme setup, load order, and any gotcha that cost you a debugging cycle. Harness-specific setup (storybook quirks, scaffolding) goes to NOTES.md; what matters for building with the components goes here.
+- **The styling idiom, with its actual vocabulary.** Teach THIS system's idiom, never a generic one: utility-class systems get a compact family table with real names from the styling source (a Tailwind preset enumerates them); prop/theme systems get "no CSS classes — style via props" with the props that carry the design language; token systems get the `var(--*)` pattern with real names. Never import an idiom the DS doesn't have.
+- **Where the truth lives.** Name the stylesheet/source files the agent should read before styling (the bound copies it will have, e.g. `_ds/<folder>/styles.css` and its imports) and the per-component docs. An agent that reads the real files beats any summary.
+- **One idiomatic build snippet.** A short real example — a library component for the control, the DS's styling idiom for the agent's own layout glue. Adapt one of your verified previews: code you know renders.
+
+**Validate before shipping.** A conventions file that names things which don't exist is worse than none — the agent trusts it, writes vocabulary that doesn't resolve, ships silently unstyled output. Before committing, every class, token, prop, and component you enumerated must exist in the built artifacts: grep classes/tokens against the compiled stylesheets in the output dir; check named components against the `components/<group>/<Name>/` directories there (the build emits one per component — that tree is the sync-time name index; `.ds-build-meta.json` carries only counts), then the bundle text (authoritative — e.g. a root-wrapper provider ships in the bundle without a component folder). Verifies in neither → fix the name or cut it; documented in source but absent from the build → a NOTES.md finding, not header content.
+
+**Budget.** Be terse — 2-4k characters covers all four concerns. If the build's size warning fires, read which side it names. Header-side (header alone exceeds ~31.9k): shorten it — it survives inline truncation only while it fits the ~32k window; past that its own tail is cut and the body contributes nothing. Body-side: conventions are safe (prepended, within-window); what's lost is the END of the generated body, typically the component index's tail — accept that deliberately, or reduce the synced surface (package shape: `componentSrcMap` exclusions, a narrower `tokensGlob`; storybook shape: sync fewer stories). There is no body-section trim knob.
+
+**Where it lives, and reruns.** Write `.design-sync/conventions.md`, set `"readmeHeader": ".design-sync/conventions.md"`, commit both — it's deliberately human-editable. Then rebuild so the README carries the header (stitched at build time). **The rebuild rule:** the post-authoring rebuild is a fresh DRIVER run on every path (first syncs omit `--remote`) — the closing receipt and the upload plan must both describe the header-bearing build; a bare converter run wipes `.sync-diff.json` and the receipt artifacts, leaving the uploaded build unreceipted. Whenever the file already exists — whatever the run's classification (re-sync, re-adoption after a lost config, recovery from a partial one) — never rewrite it: re-run the validation pass against the fresh build and report any name that no longer verifies (NOTES.md + user), proposing edits. Authoring happens only when no `.design-sync/conventions.md` exists; content belongs to its authors, your standing job is keeping it true.
