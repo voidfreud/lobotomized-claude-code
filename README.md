@@ -25,7 +25,7 @@ Not sure? Run `claude --version` and check which Opus you're on. The install bel
 | | Leaner by |
 |---|---|
 | **Always-on prompts** (system prompt + tool descriptions, inject every coding turn) | **~40%** |
-| Whole catalogued corpus (371 prompts) | **~24%** |
+| Whole catalogued corpus (376 prompts) | **~24%** |
 | **37 prompts suppressed entirely** | unused features (Managed Agents, PowerShell, WSL), always-on upsells, duplicates |
 
 The Fable set cuts *differently* than the 4.8 set, per the model's measured deltas:
@@ -39,9 +39,9 @@ The Fable set cuts *differently* than the 4.8 set, per the model's measured delt
 
 | | Leaner by |
 |---|---|
-| **Always-on prompts** (inject every turn — harness, communication, doing-tasks, executing-actions, memory, core tools) | **~30%** |
-| All behavior-shaping prompts | **~36%** |
-| **39 prompts removed entirely** | unused features, duplicates, and safety theater |
+| **Always-on prompts** (inject every turn — harness, communication, doing-tasks, executing-actions, memory, core tools) | **~39%** |
+| Whole catalogued corpus (1004 prompts) | **~28%** |
+| **66 prompts removed entirely** | unused features, duplicates, and safety theater |
 
 Less always-on prompt means a faster first response, more headroom before compaction, and less drift from contradictory rules — without losing anything the model relies on.
 
