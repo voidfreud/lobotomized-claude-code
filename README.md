@@ -52,6 +52,9 @@ These are overrides, not a tool — [tweakcc-fixed](https://github.com/skrabe/tw
 git clone https://github.com/skrabe/lobotomized-claude-code ~/.tweakcc/lobotomized-claude-code
 
 # point tweakcc at the Opus 4.8 set, plus the per-turn reminders
+# clear any existing dirs/symlinks first — if you've run tweakcc before, these may
+# already be real directories, and `ln` would nest the link *inside* them instead of replacing them
+rm -rf ~/.tweakcc/system-prompts ~/.tweakcc/system-reminders
 ln -sfn ~/.tweakcc/lobotomized-claude-code/system-prompts-opus-4-8 ~/.tweakcc/system-prompts
 ln -sfn ~/.tweakcc/lobotomized-claude-code/system-reminders        ~/.tweakcc/system-reminders
 
